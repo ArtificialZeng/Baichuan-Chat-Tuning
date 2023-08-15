@@ -24,8 +24,8 @@
 ```bash
 git clone https://github.com/ArtificialZeng/Baichuan-Chat-Tuning
 conda create -n baichuan_etuning python=3.10
-conda activate llama_etuning
-cd LLaMA-Efficient-Tuning
+conda activate baichuan_etuning
+cd Baichuan-Chat-Tuning
 pip install -r requirements.txt
 ```
 
@@ -41,8 +41,32 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 CUDA_VISIBLE_DEVICES=0 python src/train_web.py
 ```
 
-目前网页 UI 仅支持**单卡训练**。
+目前网页 UI 仅支持**单卡训练**。如果要多卡训练，请用以下的命令行形式：
 
+
+### Baichuan指令监督微调(SFT - 一般这个用的最多，预训练脚本在下面)
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
+    --stage sft \
+    --model_name_or_path path_to_your_model \
+    --do_train \
+    --dataset alpaca_gpt4_zh \
+    --template baichuan \
+    --finetuning_type lora \
+    --output_dir path_to_sft_checkpoint \
+    --overwrite_cache \
+    --per_device_train_batch_size 4 \
+    --gradient_accumulation_steps 4 \
+    --lr_scheduler_type cosine \
+    --logging_steps 10 \
+    --save_steps 1000 \
+    --learning_rate 5e-5 \
+    --num_train_epochs 3.0 \
+    --plot_loss \
+    --lora_target W_pack \
+    --fp16
+```
 ### 预训练
 
 ```bash
@@ -66,37 +90,13 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --fp16
 ```
 
-### 指令监督微调
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage sft \
-    --model_name_or_path path_to_your_model \
-    --do_train \
-    --dataset alpaca_gpt4_zh \
-    --template default \
-    --finetuning_type lora \
-    --output_dir path_to_sft_checkpoint \
-    --overwrite_cache \
-    --per_device_train_batch_size 4 \
-    --gradient_accumulation_steps 4 \
-    --lr_scheduler_type cosine \
-    --logging_steps 10 \
-    --save_steps 1000 \
-    --learning_rate 5e-5 \
-    --num_train_epochs 3.0 \
-    --plot_loss \
-    --fp16
-```
-
-
 # Baichuan Efficient Tuning
 
-[![GitHub Repo stars](https://img.shields.io/github/stars/hiyouga/LLaMA-Efficient-Tuning?style=social)](https://github.com/hiyouga/LLaMA-Efficient-Tuning/stargazers)
-[![GitHub Code License](https://img.shields.io/github/license/hiyouga/LLaMA-Efficient-Tuning)](LICENSE)
-[![GitHub last commit](https://img.shields.io/github/last-commit/hiyouga/LLaMA-Efficient-Tuning)](https://github.com/hiyouga/LLaMA-Efficient-Tuning/commits/main)
+[![GitHub Repo stars](https://img.shields.io/github/stars/hiyouga/Baichuan-Chat-Tuning?style=social)](https://github.com/hiyouga/Baichuan-Chat-Tuning/stargazers)
+[![GitHub Code License](https://img.shields.io/github/license/hiyouga/Baichuan-Chat-Tuning)](LICENSE)
+[![GitHub last commit](https://img.shields.io/github/last-commit/hiyouga/Baichuan-Chat-Tuning)](https://github.com/hiyouga/Baichuan-Chat-Tuning/commits/main)
 [![PyPI](https://img.shields.io/pypi/v/llmtuner)](https://pypi.org/project/llmtuner/)
-[![GitHub pull request](https://img.shields.io/badge/PRs-welcome-blue)](https://github.com/hiyouga/LLaMA-Efficient-Tuning/pulls)
+[![GitHub pull request](https://img.shields.io/badge/PRs-welcome-blue)](https://github.com/hiyouga/Baichuan-Chat-Tuning/pulls)
 
 \[ [English](README.md) | 中文 \]
 
@@ -112,7 +112,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 
 [23/07/29] 我们在 Hugging Face 发布了两个 13B 指令微调模型。详细内容请查阅我们的 Hugging Face 项目（[LLaMA-2](https://huggingface.co/hiyouga/Llama-2-Chinese-13b-chat) / [Baichuan](https://huggingface.co/hiyouga/baichuan-13b-sft)）。
 
-[23/07/19] 现在我们支持了 **LLaMA-2** 模型的训练。请尝试使用 `--model_name_or_path meta-llama/Llama-2-7b-hf` 参数。使用 LLaMA-2-chat 模型时请添加 `--template llama2` 参数。
+[23/07/19] 现在我们支持了 **LLaMA-2** 模型的训练。请尝试使用 `--model_name_or_path meta-baichuan/Llama-2-7b-hf` 参数。使用 LLaMA-2-chat 模型时请添加 `--template baichuan2` 参数。
 
 [23/07/18] 我们开发了支持训练和测试的**一体化浏览器界面**。请尝试使用 `train_web.py` 在您的浏览器中微调模型。感谢 [@KanadeSiina](https://github.com/KanadeSiina) 和 [@codemayq](https://github.com/codemayq) 在该功能开发中付出的努力。
 
@@ -138,8 +138,8 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 
 | 模型名                                                   | 模型大小                     | 默认模块           | Template |
 | -------------------------------------------------------- | --------------------------- | ----------------- |----------|
-| [LLaMA](https://github.com/facebookresearch/llama)       | 7B/13B/33B/65B              | q_proj,v_proj     | -        |
-| [LLaMA-2](https://huggingface.co/meta-llama)             | 7B/13B/70B                  | q_proj,v_proj     | llama2   |
+| [LLaMA](https://github.com/facebookresearch/baichuan)       | 7B/13B/33B/65B              | q_proj,v_proj     | -        |
+| [LLaMA-2](https://huggingface.co/meta-baichuan)             | 7B/13B/70B                  | q_proj,v_proj     | baichuan2   |
 | [BLOOM](https://huggingface.co/bigscience/bloom)         | 560M/1.1B/1.7B/3B/7.1B/176B | query_key_value   | -        |
 | [BLOOMZ](https://huggingface.co/bigscience/bloomz)       | 560M/1.1B/1.7B/3B/7.1B/176B | query_key_value   | -        |
 | [Falcon](https://huggingface.co/tiiuae/falcon-7b)        | 7B/40B                      | query_key_value   | -        |
@@ -447,8 +447,8 @@ python src/export_model.py \
 
 使用模型权重时，请遵循对应的模型协议：
 
-- [LLaMA](https://github.com/facebookresearch/llama/blob/main/MODEL_CARD.md)
-- [LLaMA-2](https://ai.meta.com/llama/license/)
+- [LLaMA](https://github.com/facebookresearch/baichuan/blob/main/MODEL_CARD.md)
+- [LLaMA-2](https://ai.meta.com/baichuan/license/)
 - [BLOOM](https://huggingface.co/spaces/bigscience/license)
 - [Falcon](LICENSE)
 - [Baichuan](https://huggingface.co/baichuan-inc/baichuan-7B/resolve/main/baichuan-7B%20%E6%A8%A1%E5%9E%8B%E8%AE%B8%E5%8F%AF%E5%8D%8F%E8%AE%AE.pdf)
@@ -460,10 +460,10 @@ python src/export_model.py \
 如果您觉得此项目有帮助，请考虑以下列格式引用
 
 ```bibtex
-@Misc{llama-efficient-tuning,
+@Misc{baichuan-efficient-tuning,
   title = {LLaMA Efficient Tuning},
   author = {hiyouga},
-  howpublished = {\url{https://github.com/hiyouga/LLaMA-Efficient-Tuning}},
+  howpublished = {\url{https://github.com/hiyouga/Baichuan-Chat-Tuning}},
   year = {2023}
 }
 ```
@@ -474,4 +474,4 @@ python src/export_model.py \
 
 ## Star History
 
-![Star History Chart](https://api.star-history.com/svg?repos=hiyouga/LLaMA-Efficient-Tuning&type=Date)
+![Star History Chart](https://api.star-history.com/svg?repos=hiyouga/Baichuan-Chat-Tuning&type=Date)
