@@ -1,4 +1,96 @@
-# LLaMA Efficient Tuning
+# 百川微调指南
+
+## 软件依赖
+
+- Python 3.8+ 和 PyTorch 1.13.1+
+- 🤗Transformers, Datasets, Accelerate, PEFT 和 TRL
+- sentencepiece 和 tiktoken
+- jieba, rouge-chinese 和 nltk (用于评估)
+- gradio 和 matplotlib (用于网页端交互)
+- uvicorn, fastapi 和 sse-starlette (用于 API)
+
+以及 **强而有力的 GPU**！
+
+## 如何使用
+
+### 数据准备（可跳过）
+
+关于数据集文件的格式，请参考 `data/example_dataset` 文件夹的内容。构建自定义数据集时，既可以使用单个 `.json` 文件，也可以使用一个[数据加载脚本](https://huggingface.co/docs/datasets/dataset_script)和多个文件。
+
+注意：使用自定义数据集时，请更新 `data/dataset_info.json` 文件，该文件的格式请参考 `data/README.md`。
+
+### 环境搭建（可跳过）
+
+```bash
+git clone https://github.com/ArtificialZeng/Baichuan-Chat-Tuning
+conda create -n baichuan_etuning python=3.10
+conda activate llama_etuning
+cd LLaMA-Efficient-Tuning
+pip install -r requirements.txt
+```
+
+如果要在 Windows 平台上开启量化 LoRA（QLoRA），需要安装预编译的 `bitsandbytes` 库, 支持 CUDA 11.1 到 12.1.
+
+```bash
+pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.39.1-py3-none-win_amd64.whl
+```
+
+### 浏览器一键微调/测试
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python src/train_web.py
+```
+
+目前网页 UI 仅支持**单卡训练**。
+
+### 预训练
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
+    --stage pt \
+    --model_name_or_path path_to_your_model \
+    --do_train \
+    --dataset wiki_demo \
+    --template default \
+    --finetuning_type lora \
+    --output_dir path_to_pt_checkpoint \
+    --overwrite_cache \
+    --per_device_train_batch_size 4 \
+    --gradient_accumulation_steps 4 \
+    --lr_scheduler_type cosine \
+    --logging_steps 10 \
+    --save_steps 1000 \
+    --learning_rate 5e-5 \
+    --num_train_epochs 3.0 \
+    --plot_loss \
+    --fp16
+```
+
+### 指令监督微调
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
+    --stage sft \
+    --model_name_or_path path_to_your_model \
+    --do_train \
+    --dataset alpaca_gpt4_zh \
+    --template default \
+    --finetuning_type lora \
+    --output_dir path_to_sft_checkpoint \
+    --overwrite_cache \
+    --per_device_train_batch_size 4 \
+    --gradient_accumulation_steps 4 \
+    --lr_scheduler_type cosine \
+    --logging_steps 10 \
+    --save_steps 1000 \
+    --learning_rate 5e-5 \
+    --num_train_epochs 3.0 \
+    --plot_loss \
+    --fp16
+```
+
+
+# Baichuan Efficient Tuning
 
 [![GitHub Repo stars](https://img.shields.io/github/stars/hiyouga/LLaMA-Efficient-Tuning?style=social)](https://github.com/hiyouga/LLaMA-Efficient-Tuning/stargazers)
 [![GitHub Code License](https://img.shields.io/github/license/hiyouga/LLaMA-Efficient-Tuning)](LICENSE)
@@ -115,94 +207,7 @@ pip install --upgrade huggingface_hub
 huggingface-cli login
 ```
 
-## 软件依赖
 
-- Python 3.8+ 和 PyTorch 1.13.1+
-- 🤗Transformers, Datasets, Accelerate, PEFT 和 TRL
-- sentencepiece 和 tiktoken
-- jieba, rouge-chinese 和 nltk (用于评估)
-- gradio 和 matplotlib (用于网页端交互)
-- uvicorn, fastapi 和 sse-starlette (用于 API)
-
-以及 **强而有力的 GPU**！
-
-## 如何使用
-
-### 数据准备（可跳过）
-
-关于数据集文件的格式，请参考 `data/example_dataset` 文件夹的内容。构建自定义数据集时，既可以使用单个 `.json` 文件，也可以使用一个[数据加载脚本](https://huggingface.co/docs/datasets/dataset_script)和多个文件。
-
-注意：使用自定义数据集时，请更新 `data/dataset_info.json` 文件，该文件的格式请参考 `data/README.md`。
-
-### 环境搭建（可跳过）
-
-```bash
-git clone https://github.com/hiyouga/LLaMA-Efficient-Tuning.git
-conda create -n llama_etuning python=3.10
-conda activate llama_etuning
-cd LLaMA-Efficient-Tuning
-pip install -r requirements.txt
-```
-
-如果要在 Windows 平台上开启量化 LoRA（QLoRA），需要安装预编译的 `bitsandbytes` 库, 支持 CUDA 11.1 到 12.1.
-
-```bash
-pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.39.1-py3-none-win_amd64.whl
-```
-
-### 浏览器一键微调/测试
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_web.py
-```
-
-目前网页 UI 仅支持**单卡训练**。
-
-### 预训练
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage pt \
-    --model_name_or_path path_to_your_model \
-    --do_train \
-    --dataset wiki_demo \
-    --template default \
-    --finetuning_type lora \
-    --output_dir path_to_pt_checkpoint \
-    --overwrite_cache \
-    --per_device_train_batch_size 4 \
-    --gradient_accumulation_steps 4 \
-    --lr_scheduler_type cosine \
-    --logging_steps 10 \
-    --save_steps 1000 \
-    --learning_rate 5e-5 \
-    --num_train_epochs 3.0 \
-    --plot_loss \
-    --fp16
-```
-
-### 指令监督微调
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage sft \
-    --model_name_or_path path_to_your_model \
-    --do_train \
-    --dataset alpaca_gpt4_zh \
-    --template default \
-    --finetuning_type lora \
-    --output_dir path_to_sft_checkpoint \
-    --overwrite_cache \
-    --per_device_train_batch_size 4 \
-    --gradient_accumulation_steps 4 \
-    --lr_scheduler_type cosine \
-    --logging_steps 10 \
-    --save_steps 1000 \
-    --learning_rate 5e-5 \
-    --num_train_epochs 3.0 \
-    --plot_loss \
-    --fp16
-```
 
 ### 奖励模型训练
 
